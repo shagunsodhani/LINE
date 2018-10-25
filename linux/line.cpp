@@ -36,7 +36,7 @@ struct ClassVertex {
 	char *name;
 };
 
-char network_file[MAX_STRING], embedding_file[MAX_STRING];
+char network_file[MAX_STRING], embedding_file[MAX_STRING], embedding_file_dst[MAX_STRING];
 struct ClassVertex *vertex;
 int is_binary = 0, num_threads = 1, order = 2, dim = 100, num_negative = 5;
 int *vertex_hash_table, *neg_table;
@@ -366,6 +366,17 @@ void Output()
 		fprintf(fo, "\n");
 	}
 	fclose(fo);
+	
+	fo = fopen(embedding_file_dst, "wb");
+	fprintf(fo, "%d %d\n", num_vertices, dim);
+	for (int a = 0; a < num_vertices; a++)
+	{
+		fprintf(fo, "%s ", vertex[a].name);
+		if (is_binary) for (int b = 0; b < dim; b++) fwrite(&emb_context[a * dim + b], sizeof(real), 1, fo);
+		else for (int b = 0; b < dim; b++) fprintf(fo, "%lf ", emb_context[a * dim + b]);
+		fprintf(fo, "\n");
+	}
+	fclose(fo);
 }
 
 void TrainLINE() {
@@ -450,6 +461,7 @@ int main(int argc, char **argv) {
 	}
 	if ((i = ArgPos((char *)"-train", argc, argv)) > 0) strcpy(network_file, argv[i + 1]);
 	if ((i = ArgPos((char *)"-output", argc, argv)) > 0) strcpy(embedding_file, argv[i + 1]);
+	if ((i = ArgPos((char *)"-output_dst", argc, argv)) > 0) strcpy(embedding_file_dst, argv[i + 1]);
 	if ((i = ArgPos((char *)"-binary", argc, argv)) > 0) is_binary = atoi(argv[i + 1]);
 	if ((i = ArgPos((char *)"-size", argc, argv)) > 0) dim = atoi(argv[i + 1]);
 	if ((i = ArgPos((char *)"-order", argc, argv)) > 0) order = atoi(argv[i + 1]);
